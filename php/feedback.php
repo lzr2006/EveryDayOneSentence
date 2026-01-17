@@ -9,5 +9,4 @@ $message = "Hello! 这是邮件的内容。";  // 邮件正文
 $from = "someonelse@example.com";   // 邮件发送者
 $headers = "From:" . $from;         // 头部信息设置
 mail($to,$subject,$message,$headers);*/
-echo "adadda";
  ?>
