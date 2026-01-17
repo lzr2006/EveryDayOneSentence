@@ -20,7 +20,7 @@ if($_SERVER['REQUEST_METHOD'] == 'GET')
 	]);
 	return;
 	}
-	$sql = "SELECT sentence, is_passed_shenhe FROM sentence WHERE user_id = :user_id";
+	$sql = "SELECT sentence, is_passed_shenhe, id FROM sentence WHERE user_id = :user_id";
 	$stmt = $pdo->prepare($sql);
 	$is_exe = $stmt->execute(
 	[
