@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>审核</title>
+</head>
+<body>
+    <p id="sentence">暂时没有句子</p>
+    <input type="radio" name="radio" value="1">通过
+    <input type="radio" name="radio" value="0">不通过
+    <button onclick="update()">提交</button>
+    <button onclick="getNext()">获取下一个句子</button>
+    <script>
+        const sentence = document.getElementById('sentence');
+        getNext()
+        function update()
+        {
+            const request = new XMLHttpRequest();
+            request.open('POST', 'php/shenhe.php');
+            var formData = new FormData();
+            formData.append('action', "update");
+            formData.append('sentence_id', sentence.dataset.id)
+            const selectedRadio = document.querySelector('input[name="radio"]:checked')
+            if(selectedRadio)
+            {
+                var reviewValue = selectedRadio.value
+                console.log(reviewValue)
+                formData.append('is_passed', reviewValue)
+            }
+            request.onload = function () 
+            {
+                if (request.status === 200) 
+                {
+                    console.log(request.responseText)
+                    var json = JSON.parse(request.responseText);
+                    console.log(json);
+                    if (json.status == true) 
+                    {
+                        alert(json.message);
+                    } else {
+                        alert(json.message);
+                        console.warn(json);
+                    }
+                }
+                else{
+                    alert('请求失败');
+                }
+            };
+            request.send(formData)
+            sentence.innerHTML
+        }
+        function getNext()
+        {
+            const request = new XMLHttpRequest();
+            request.open('GET', 'php/shenhe.php?action=getNext');
+            request.onload = function () 
+            {
+                if (request.status === 200) 
+                {
+                    console.log(request.responseText)
+                    var json = JSON.parse(request.responseText);
+                    console.log(json);
+                    if (json.status == true) 
+                    {
+                        sentence.innerHTML = json.data.sentence;
+                        sentence.dataset.id = json.data.id;
+                    } else {
+                        alert('获取失败' + json.error);
+                    }
+                } 
+            };
+            request.send()
+        }
+    </script>
+</body>
+</html>

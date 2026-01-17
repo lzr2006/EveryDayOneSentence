@@ -1,38 +1,57 @@
 <?php
-header("Content-Type:text/json;charset=utf-8");
+header("Content-Type:application/json;charset=utf-8");
 include("config.php");
-if($pdo_type == "local")
+if($_SERVER['REQUEST_METHOD'] == 'POST')
 {
-  if($_SERVER['REQUEST_METHOD'] == 'POST')
+  if($_POST['action'] == "update")
   {
-    if($_POST['action'] == "getAllSentence")
+    $sql = "UPDATE sentence SET is_passed_shenhe=:is_passed_shenhe WHERE id=:sentence_id";
+    $stmt = $pdo->prepare($sql);
+    $result = $stmt->execute([
+      ":is_passed_shenhe"=> $_POST['is_passed'],
+      ":sentence_id"=> $_POST['sentence_id']
+    ]);
+    if($result)
     {
-      $sql = "SELECT sentence, email,created_at FROM sentence WHERE email=:email";
-      $stmt = $pdo_local->prepare($sql);
-      $stmt->execute([
-        ":email"=>$_POST['email'],
-      ]);
-      $result = $stmt->fetchAll();
       echo json_encode(
         array(
-              "code" => $result,
-              "message"=>$result
+              "status" => true,
+              "message"=> "更新成功",
         ));
     }
-  else if($_POST['action'] == "update")
-  {
-    $sql = "UPDATE sentence SET stataus=:stataus WHERE email=:email";
-    $stmt = $pdo_local->prepare($sql);
-    $result = $stmt->execute([
-      ":email"=>$_POST['email'],
-      ":status"=>$_POST['status'],
-    ]);
-    echo json_encode(
-    array(
-          "code" => $result,
-          "message"=>$result
-    ));
+    else{
+      echo json_encode(
+        array(
+              "status" => false,
+              "message"=> "更新失败",
+        ));
+    }
   }
 }
+else if($_SERVER['REQUEST_METHOD'] == 'GET')
+{
+  if($_GET["action"] == "getNext")
+  {
+    $sql = "SELECT sentence,id FROM sentence WHERE is_passed_shenhe=0";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    if($result)
+    {
+      echo json_encode(
+        array(
+              "status" => true,
+              "message"=> "获取成功",
+              "data"=> $result
+        ));
+    }
+    else{
+      echo json_encode(
+        array(
+              "status" => false,
+              "message"=> "获取失败",
+        ));
+    }
+  }
 }
 ?>
