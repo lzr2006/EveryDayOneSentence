@@ -137,6 +137,7 @@
             justify-content: center;
             flex-wrap: wrap;
         }
+
         .win8-button {
             background-color: #0078D7;
             color: white;
@@ -198,7 +199,7 @@
 
     <div id="container">
         <div class="sentence-card">
-            <p id="sentence">这是句子</p>
+            <p id="sentence">暂时没有句子</p>
             <div class="action-buttons">
                 <button class="win8-button" onclick="getNewSentence()">
                     <i class="fa fa-refresh"></i> 获取新句子
@@ -210,21 +211,76 @@
         </div>
     </div>
     <script>
+        getNewSentence();
         function getNewSentence() {
             const request = new XMLHttpRequest();
-            request.open('GET', 'php/get_sentence.php');
+            request.open('GET', 'php/get_random_sentence.php');
             request.onload = function () {
                 if (request.status === 200) {
                     var json = JSON.parse(request.responseText);
-                    document.getElementById('sentence').innerHTML = json.sentence;
+                    document.getElementById('sentence').innerHTML = json.data;
                 } else {
                     alert('获取句子失败');
                 }
             }
+            request.send();
         }
         function copySentence() {
-            var sentence = document.getElementById('sentence').innerHTML;
-            navigator.clipboard.writeText(sentence);
+            var sentenceElement = document.getElementById('sentence');
+            var sentence = sentenceElement.textContent || sentenceElement.innerText;
+
+            // 尝试使用 Clipboard API（现代浏览器）
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(sentence).then(function () {
+                    // 成功提示
+                    showCopyFeedback();
+                }, function (err) {
+                    // 失败时回退到传统方法
+                    fallbackCopy(sentence);
+                });
+            } else {
+                // 浏览器不支持或非安全上下文，使用传统方法
+                fallbackCopy(sentence);
+            }
+        }
+
+        // 回退方法
+        function fallbackCopy(text) {
+            // 创建临时文本区域
+            var textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+
+            // 选择并复制文本
+            textArea.focus();
+            textArea.select();
+
+            try {
+                var successful = document.execCommand('copy');
+                if (successful) {
+                    showCopyFeedback();
+                } else {
+                    alert('复制失败，请手动复制');
+                }
+            } catch (err) {
+                alert('复制失败，请手动复制');
+            }
+
+            // 清理临时元素
+            document.body.removeChild(textArea);
+        }
+
+        // 显示复制成功反馈
+        function showCopyFeedback() {
+            var originalText = document.getElementById('sentence').textContent;
+            document.getElementById('sentence').textContent = '已复制到剪贴板！';
+
+            setTimeout(function () {
+                document.getElementById('sentence').textContent = originalText;
+            }, 1500);
         }
     </script>
 </body>
