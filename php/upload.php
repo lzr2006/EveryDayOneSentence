@@ -1,33 +1,54 @@
 <?php
-header("Content-Type:text/json;charset=utf-8");
-include("auto_login_db.php");
-if($pdo_type == "local")
-{
-  if($_SERVER['REQUEST_METHOD'] == 'POST')
-  {
-    $sql = "INSERT INTO sentence VALUES(NULL,'$email','$sentence',NULL,NULL)";
-    $stmt = $pdo_local->prepare($sql);
-    $stmt->execute([
-      ":email"=>$_POST['email'],
-      ":sentence"=>$_POST['sentence']
-    ]);
-    $result = $pdo_local->fetchResult();
-    if($result==true)
-    {
-      echo json_encode(
-        array(
-              "code" => $result,
-              "message"=>"投稿成功"
-        ));
+header("Content-Type: application/json; charset=utf-8");
+include("config.php");
+
+if($_SERVER['REQUEST_METHOD'] == 'POST') {
+    try {
+        $email = $_POST["email"];
+        $sentence = $_POST["sentence"];
+        
+        // 首先检查用户是否存在
+        $stmt = $pdo->prepare("SELECT id FROM user WHERE email = :email");
+        $stmt->execute([":email" => $email]);
+        $result_uid = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$result_uid) {
+            echo json_encode([
+                "status" => false,
+                "message" => "用户不存在: " . $email
+            ]);
+            exit;
+        }
+        
+        $uid = $result_uid["id"];
+        
+        // 修复：不要包含 id 字段，让其自动递增；不要设置时间字段为 NULL
+        $sql = "INSERT INTO sentence (user_id, sentence, is_passed_shenhe) VALUES (:user_id, :sentence, :is_passed_shenhe)";
+        $stmt = $pdo->prepare($sql);
+        $is_exe_ok = $stmt->execute([
+            ":user_id" => $uid,
+            ":sentence" => $sentence,
+            ":is_passed_shenhe" => 0
+        ]);
+        
+        if($is_exe_ok) {
+            echo json_encode([
+                "status" => true,
+                "message" => "投稿成功"
+            ]);
+        } else {
+            $error_info = $stmt->errorInfo();
+            echo json_encode([
+                "status" => false,
+                "message" => "投稿失败",
+                "error" => $error_info
+            ]);
+        }
+    } catch (Exception $e) {
+        echo json_encode([
+            "status" => false,
+            "message" => "数据库错误: " . $e->getMessage()
+        ]);
     }
-    else{
-      echo json_encode(
-        array(
-              "code" => $result,
-              "message"=>"投稿失败"
-        )
-      )
-    }
-  }
 }
- ?>
+?>
