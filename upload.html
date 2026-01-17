@@ -96,6 +96,11 @@
       display: inline-flex;
       flex-direction: column;
     }
+    #edit > #buttons
+    {
+      display: flex;
+      flex-direction: row;
+    }
   </style>
   <script src="js/thirdparty/localforage.min.js"></script>
 </head>
@@ -120,7 +125,10 @@
   <div id="edit">
     <textarea id="in" type="text" name="sentence" value=""></textarea><br />
     <p id="left">还能再输入100字</p>
-    <button id="upload" class="win8-button">投稿</button>
+    <div id="buttons">
+      <button id="upload" class="win8-button">投稿</button> &nbsp;
+      <button id="update" class="win8-button">更新投稿</button>
+    </div>
   </div>
 
   <script>
@@ -204,7 +212,15 @@
         request.open('POST', 'php/upload.php');
         var formData = new FormData();
         formData.append('email', user.email);  // 将用户邮箱传递给后端
-        formData.append('sentence', document.getElementById('in').value);
+        if(textarea.value && textarea.value.trim())
+        {
+          formData.append('sentence', document.getElementById('in').value);
+        }
+        else
+        {
+          alert('请输入内容');
+          return;
+        }
         request.onload = function () {
           if (request.status === 200) 
           {
