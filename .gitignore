@@ -2,3 +2,5 @@
 /excel表格设计
 *.xlsx
 e.zip
+.htaccess
+nginx.htaccess
