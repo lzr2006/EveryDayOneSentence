@@ -133,9 +133,11 @@
 
   <script>
     const editor = document.getElementById('in');
+    var currentSentenceId = -1;
     function copyToEditor()
     {
       editor.value = this.innerHTML;
+      currentSentenceId = this.dataset.id
     }
     // const sidebar = document.getElementById('sidebar');
     const sidebarList = document.getElementsByClassName('sidebar-list')[0]
@@ -159,6 +161,7 @@
               console.log('获取稿件成功');
               for (var i = 0; i < json.data.length; i++) {
                 var item = json.data[i];
+                // 添加到审核通过列表
                 if(item.is_passed_shenhe == 1)
                 {
                   var li = document.createElement('li');
@@ -167,14 +170,22 @@
                   for(var j=0; j< sidebarList.children.item(1).children.length; j++)
                   {
                     var li = sidebarList.children.item(1).children.item(j);
+                    li.dataset.id = item.id
                     li.addEventListener('click',copyToEditor)
                   }
                 }
+                // 添加到待审核列表
                 else if(item.is_passed_shenhe == 0)
                 {
                   var li = document.createElement('li');
                   li.innerHTML = item.sentence;
                   sidebarList.children.item(0).appendChild(li)
+                  for(var j=0; j< sidebarList.children.item(0).children.length; j++)
+                  {
+                    var li = sidebarList.children.item(0).children.item(j);
+                    li.dataset.id = item.id
+                    li.addEventListener('click',copyToEditor)
+                  }
                 }
               }
             } else {
@@ -193,6 +204,7 @@
     var left = 100;
     const textarea = document.getElementById('in');
     const uploadButton = document.getElementById('upload');
+    const updateButton = document.getElementById('update');
     textarea.addEventListener('input', function () {
       left = 100 - textarea.value.length;
       document.getElementById('left').innerHTML = '还能再输入' + left + '字';
@@ -214,7 +226,8 @@
         formData.append('email', user.email);  // 将用户邮箱传递给后端
         if(textarea.value && textarea.value.trim())
         {
-          formData.append('sentence', document.getElementById('in').value);
+          formData.append('sentence', document.getElementById('in').value)
+          formData.append('action', "upload")
         }
         else
         {
@@ -224,6 +237,54 @@
         request.onload = function () {
           if (request.status === 200) 
           {
+            var json = JSON.parse(request.responseText);
+            console.log(json);
+            if (json.status == true) 
+            {
+              alert('投稿成功');
+            } else {
+              alert('投稿失败' + json.error);
+              console.warn(json);
+            }
+          } 
+          else {
+            alert('投稿失败');
+          }
+        };
+        request.send(formData);
+      }).catch(function (err) {
+        console.error('获取用户数据失败:', err);
+        alert('请先登录');
+        window.location.href = 'login2.html';
+      });
+    });
+    updateButton.addEventListener('click', function () {
+      localforage.getItem('user').then(function (user) {
+        if (user == null) {
+          alert('请先登录');
+          window.location.href = 'login2.html';
+          return;
+        }
+        const request = new XMLHttpRequest();
+        request.open('POST', 'php/upload.php');
+        var formData = new FormData();
+        formData.append('email', user.email);  // 将用户邮箱传递给后端
+        if(textarea.value && textarea.value.trim())
+        {
+          formData.append('sentence', document.getElementById('in').value);
+          formData.append('action', "update");
+          formData.append('sentence_id', currentSentenceId);
+        }
+        else
+        {
+          alert('请输入内容');
+          return;
+        }
+        request.onload = function () {
+          if (request.status === 200) 
+          {
+            console.log()
+            console.log(request.responseText)
             var json = JSON.parse(request.responseText);
             console.log(json);
             if (json.status == true) 
