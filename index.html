@@ -216,11 +216,22 @@
             const request = new XMLHttpRequest();
             request.open('GET', 'php/get_random_sentence.php');
             request.onload = function () {
-                if (request.status === 200) {
+                if (request.status === 200) 
+                {
+                    // console.log(request.responseText)
                     var json = JSON.parse(request.responseText);
-                    document.getElementById('sentence').innerHTML = json.data;
+                    if(json.status == true && json.data)
+                    {
+                        if(json.data)
+                        {
+                            document.getElementById('sentence').innerHTML = json.data;
+                        }
+                        else{
+                            document.getElementById('sentence').innerHTML = "暂时没有句子"
+                        }
+                    }                    
                 } else {
-                    alert('获取句子失败');
+                    alert("请求失败");
                 }
             }
             request.send();
