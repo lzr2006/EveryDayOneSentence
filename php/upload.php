@@ -1,27 +1,33 @@
 <?php
-#header("Content-Type:text/plain;charset=utf-8");
+header("Content-Type:text/json;charset=utf-8");
 include("auto_login_db.php");
-#远程
-if($_POST['db_remote'])
+if($pdo_type == "local")
 {
-  $tmp_db_connect=auto_login_db("mryj");
-  upload($tmp_db_connect);
-}
-else
-{
-  $tmp_db_connect=auto_login_db("local");
-  upload($tmp_db_connect);
-}
-//投稿功能，默认投稿至审核数据表，审核通过之后，复制数据到句子总表
-function upload($conn)
-{
-  $today=date("Y/m/d");
-  $juzi=$_POST['text'];
-  $user=$_POST['user'];
-  // TODO: 新的审核的投稿方式 // NOTE: 首先插入到临时审核表
-  $sql="INSERT INTO checkjuzi VALUES('$juzi','$today','$user',-1)";
-  mysqli_query($conn,"SET NAMES utf8");
-  $result=mysqli_query($conn,$sql);
-  echo $result;
+  if($_SERVER['REQUEST_METHOD'] == 'POST')
+  {
+    $sql = "INSERT INTO sentence VALUES(NULL,'$email','$sentence',NULL,NULL)";
+    $stmt = $pdo_local->prepare($sql);
+    $stmt->execute([
+      ":email"=>$_POST['email'],
+      ":sentence"=>$_POST['sentence']
+    ]);
+    $result = $pdo_local->fetchResult();
+    if($result==true)
+    {
+      echo json_encode(
+        array(
+              "code" => $result,
+              "message"=>"投稿成功"
+        ));
+    }
+    else{
+      echo json_encode(
+        array(
+              "code" => $result,
+              "message"=>"投稿失败"
+        )
+      )
+    }
+  }
 }
  ?>
