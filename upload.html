@@ -72,6 +72,10 @@
       background-color: #444444;
       padding-left: 25px;
     }
+    .sidebar-item > li:hover
+    {
+      background-color: #0078D7;
+    }
 
     .sidebar-item.active {
       background-color: #0078D7;
@@ -107,7 +111,7 @@
     <div class="sidebar-header">
       <span>稿件管理</span>
     </div>
-    <ol>
+    <ol class="sidebar-list">
       <li class="sidebar-item">待审核稿件</li>
       <li class="sidebar-item">已发布稿件</li>
       <li class="sidebar-item">草稿箱</li>
@@ -120,6 +124,14 @@
   </div>
 
   <script>
+    const editor = document.getElementById('in');
+    function copyToEditor()
+    {
+      editor.value = this.innerHTML;
+    }
+    // const sidebar = document.getElementById('sidebar');
+    const sidebarList = document.getElementsByClassName('sidebar-list')[0]
+    // console.log(sidebarList)
     // 正确的异步处理方式
     localforage.getItem('user').then(function (user) {
       if (user == null) {
@@ -127,9 +139,8 @@
         window.location.href = 'login2.html';
       } else {
         // 用户已登录，继续执行其他逻辑
-        //console.log('用户已登录:', user);
         const request = new XMLHttpRequest();
-        request.open('GET', 'php/get_user_gaojian.php?email=' + user.email);
+        request.open('GET', 'php/get_gaojian.php?email=' + user.email);
         request.onload = function () {
           if (request.status === 200) 
           {
@@ -137,7 +148,27 @@
             console.log(json);
             if (json.status == true) 
             {
-              alert('获取稿件成功');
+              console.log('获取稿件成功');
+              for (var i = 0; i < json.data.length; i++) {
+                var item = json.data[i];
+                if(item.is_passed_shenhe == 1)
+                {
+                  var li = document.createElement('li');
+                  li.innerHTML = item.sentence;
+                  sidebarList.children.item(1).appendChild(li)
+                  for(var j=0; j< sidebarList.children.item(1).children.length; j++)
+                  {
+                    var li = sidebarList.children.item(1).children.item(j);
+                    li.addEventListener('click',copyToEditor)
+                  }
+                }
+                else if(item.is_passed_shenhe == 0)
+                {
+                  var li = document.createElement('li');
+                  li.innerHTML = item.sentence;
+                  sidebarList.children.item(0).appendChild(li)
+                }
+              }
             } else {
               alert('获取稿件失败' + json.error);
               console.warn(json);
@@ -169,7 +200,6 @@
           window.location.href = 'login2.html';
           return;
         }
-
         const request = new XMLHttpRequest();
         request.open('POST', 'php/upload.php');
         var formData = new FormData();
