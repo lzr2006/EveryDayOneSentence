@@ -5,74 +5,231 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>审核</title>
+    <style>
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+        }
+        
+        .login-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .main-content {
+            display: none;
+        }
+        
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <p id="sentence">暂时没有句子</p>
-    <input type="radio" name="radio" value="1">通过
-    <input type="radio" name="radio" value="0">不通过
-    <button onclick="update()">提交</button>
-    <button onclick="getNext()">获取下一个句子</button>
+    <!-- 登录界面 -->
+    <div id="loginContainer" class="login-container">
+        <div class="login-form">
+            <h2>审核系统登录</h2>
+            <input type="password" id="passwordInput" placeholder="请输入审核密码">
+            <button onclick="checkPassword()">登录</button>
+            <div id="errorMsg" style="color: red; margin-top: 10px;"></div>
+        </div>
+    </div>
+
+    <!-- 主内容区域 - 默认隐藏 -->
+    <div id="mainContent" class="main-content">
+        <p id="sentence">暂时没有句子</p>
+        <input type="radio" name="radio" value="1">通过
+        <input type="radio" name="radio" value="0">不通过
+        <button onclick="update()">提交</button>
+        <button onclick="getNext()">获取下一个句子</button>
+    </div>
+
     <script>
+        // 全局变量
+        let isAuthenticated = false;
         const sentence = document.getElementById('sentence');
-        getNext()
-        function update()
-        {
+        
+        // 检查密码
+        function checkPassword() {
+            const password = document.getElementById('passwordInput').value;
+            const errorMsg = document.getElementById('errorMsg');
+            
+            if (!password) {
+                errorMsg.textContent = '请输入密码';
+                return;
+            }
+            
+            const request = new XMLHttpRequest();
+            request.open('POST', 'php/auth.php');
+            const formData = new FormData();
+            formData.append('action', 'login');
+            formData.append('password', password);
+            
+            request.onload = function() {
+                if (request.status === 200) {
+                    try {
+                        const response = JSON.parse(request.responseText);
+                        if (response.status === true) {
+                            // 密码验证成功
+                            isAuthenticated = true;
+                            document.getElementById('loginContainer').style.display = 'none';
+                            document.getElementById('mainContent').style.display = 'block';
+                            
+                            // 获取第一个句子
+                            getNext();
+                        } else {
+                            errorMsg.textContent = response.message || '密码错误';
+                            document.getElementById('passwordInput').value = '';
+                        }
+                    } catch (e) {
+                        console.error('解析响应失败:', e);
+                        errorMsg.textContent = '服务器响应错误';
+                    }
+                } else {
+                    errorMsg.textContent = '网络错误，请重试';
+                }
+            };
+            
+            request.onerror = function() {
+                errorMsg.textContent = '网络连接错误';
+            };
+            
+            request.send(formData);
+        }
+
+        // 提交审核结果
+        function update() {
+            if (!isAuthenticated) {
+                alert('请先登录');
+                showLogin();
+                return;
+            }
+
             const request = new XMLHttpRequest();
             request.open('POST', 'php/shenhe.php');
-            var formData = new FormData();
+            const formData = new FormData();
             formData.append('action', "update");
-            formData.append('sentence_id', sentence.dataset.id)
-            const selectedRadio = document.querySelector('input[name="radio"]:checked')
-            if(selectedRadio)
-            {
-                var reviewValue = selectedRadio.value
-                console.log(reviewValue)
-                formData.append('is_passed', reviewValue)
+            formData.append('sentence_id', sentence.dataset.id);
+            formData.append('sentence', sentence.textContent || sentence.innerHTML);
+            
+            const selectedRadio = document.querySelector('input[name="radio"]:checked');
+            if (selectedRadio) {
+                const reviewValue = selectedRadio.value;
+                console.log(reviewValue);
+                formData.append('is_passed', reviewValue);
             }
-            request.onload = function () 
-            {
-                if (request.status === 200) 
-                {
-                    console.log(request.responseText)
-                    var json = JSON.parse(request.responseText);
-                    console.log(json);
-                    if (json.status == true) 
-                    {
-                        alert(json.message);
-                    } else {
-                        alert(json.message);
-                        console.warn(json);
+            
+            request.onload = function() {
+                if (request.status === 200) {
+                    try {
+                        const json = JSON.parse(request.responseText);
+                        console.log(json);
+                        
+                        if (json.status === true) {
+                            alert(json.message);
+                        } else {
+                            alert(json.message);
+                            console.warn(json);
+                        }
+                    } catch (e) {
+                        console.error('解析响应失败:', e);
+                        alert('服务器响应错误');
                     }
-                }
-                else{
+                } else {
                     alert('请求失败');
                 }
             };
-            request.send(formData)
-            sentence.innerHTML
+            
+            request.send(formData);
         }
-        function getNext()
-        {
+
+        // 获取下一个句子
+        function getNext() {
+            if (!isAuthenticated) {
+                alert('请先登录');
+                showLogin();
+                return;
+            }
+
             const request = new XMLHttpRequest();
             request.open('GET', 'php/shenhe.php?action=getNext');
-            request.onload = function () 
-            {
-                if (request.status === 200) 
-                {
-                    console.log(request.responseText)
-                    var json = JSON.parse(request.responseText);
-                    console.log(json);
-                    if (json.status == true) 
-                    {
-                        sentence.innerHTML = json.data.sentence;
-                        sentence.dataset.id = json.data.id;
-                    } else {
-                        alert('获取失败' + json.error);
+            
+            request.onload = function() {
+                if (request.status === 200) {
+                    try {
+                        const json = JSON.parse(request.responseText);
+                        console.log(json);
+                        
+                        if (json.status === true) {
+                            sentence.innerHTML = json.data.sentence;
+                            sentence.dataset.id = json.data.id;
+                        } else {
+                            alert('获取失败: ' + json.error);
+                        }
+                    } catch (e) {
+                        console.error('解析响应失败:', e);
+                        alert('服务器响应错误');
                     }
-                } 
+                }
             };
-            request.send()
+            
+            request.send();
         }
+
+        // 显示登录界面
+        function showLogin() {
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('errorMsg').textContent = '';
+        }
+
+        // 阻止右键查看源码
+        document.addEventListener('contextmenu', function(e) {
+            if (!isAuthenticated) {
+                e.preventDefault();
+            }
+        });
+
+        // 阻止F12等快捷键
+        document.onkeydown = function(e) {
+            if (!isAuthenticated) {
+                // 禁用F12、Ctrl+Shift+I、Ctrl+U、Ctrl+Shift+J
+                if (
+                    e.keyCode === 123 || 
+                    (e.ctrlKey && e.shiftKey && e.keyCode === 73) ||
+                    (e.ctrlKey && e.keyCode === 85) ||
+                    (e.ctrlKey && e.shiftKey && e.keyCode === 74)
+                ) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        };
     </script>
 </body>
 </html>
