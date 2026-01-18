@@ -28,15 +28,4 @@ if($result && $reuslt2)
                 "message"=>"tables initialized"
         ));
 }
-// else if($pdo_type == "remote")
-// {
-//     $stmt = $remote_pdo->prepare($table_user);
-//     $stmt->execute();
-//     $result = $stmt->fetchResult();
-//     echo json_encode(
-//         array(
-//               "code" => $result,
-//               "message"=>"Table user created"
-//         ));
-// }
 ?>
