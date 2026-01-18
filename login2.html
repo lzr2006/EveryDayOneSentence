@@ -1,16 +1,15 @@
+<!DOCTYPE html>
 <html>
 <head>
-<title>每日一句-Login</title>
-  <meta charset="UTF-8">
-  <!--无效css-->
-    <!--  <link href="style.css" rel="stylesheet" type="text/css">-->
-      <link rel="stylesheet" href="css/login2.css">
-        <script src="js/thirdparty/localforage.min.js"></script>
+    <title>每日一句-Login</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="css/login2.css">
+    <script src="js/thirdparty/localforage.min.js"></script>
 </head>
 <body>
-<div class="wrapper">
-    <div class="header">Login to <span>每日一句/小沙盒</span></div>
-    <div class="content">
+    <div class="wrapper">
+        <div class="header">Login to <span>每日一句/小沙盒</span></div>
+        <div class="content">
             <ul>
                 <li>
                     <div class="text">
@@ -19,7 +18,7 @@
                 </li>
                 <li>
                     <div class="password">
-                        <span class="mima">密码</span><input type="password" placeholder="请输入密码" id="password"  />
+                        <span class="mima">密码</span><input type="password" placeholder="请输入密码" id="password" />
                     </div>
                 </li>
                 <li class="remember">
@@ -27,67 +26,60 @@
                 </li>
 
                 <li>
-                    <input type="button" value="登陆" id="Mylogin" onclick="login()" >
+                    <input type="button" value="登陆" id="Mylogin" onclick="login()">
                 </li>
                 <li>
-                    <input type="button" value="注册" id="register" onclick="register()" >
+                    <input type="button" value="注册" id="register" onclick="register()">
                 </li>
             </ul>
 
-        <div class="footer">
-            <p>小沙盒工作室  <a href="https://lzr2006.github.io/wkgd/" target="_blank">Copyright 2018-2020 ToysWorld</a></p>
+            <div class="footer">
+                <p>小沙盒工作室 <a href="https://lzr2006.github.io/wkgd/" target="_blank">Copyright 2018-2020 ToysWorld</a>
+                </p>
+            </div>
         </div>
     </div>
-</div>
     <script>
         const email = document.getElementById('email');
         const password = document.getElementById('password');
 
-        function login()
-        {
+        function login() {
             const request = new XMLHttpRequest();
-            request.open('GET',"php/login.php?email="+document.getElementById('email').value+"&password="+document.getElementById('password').value)
+            request.open('GET', "php/login.php?email=" + document.getElementById('email').value + "&password=" + document.getElementById('password').value)
             request.onload = function () {
-                if (request.status === 200) 
-                {
+                if (request.status === 200) {
                     //console.log(request.responseText);
                     var respone = JSON.parse(request.responseText);
-                    if(respone.status == true)
-                    {
-                        if(respone.status == true)
-                        {
+                    if (respone.status == true) {
+                        if (respone.status == true) {
                             alert('登录成功');
                             localforage.setItem('user', {
-                            email: email.value,
-                            password: password.value
+                                email: email.value,
+                                password: password.value
                             })
                             window.location.href = 'index.html';
                         }
                     }
-                    else{
+                    else {
                         alert(respone.message);
                     }
-                } else 
-                {
+                } else {
                     alert('请求失败');
                 }
             }
             request.send();
 
         }
-        function register()
-        {
+        function register() {
             const request = new XMLHttpRequest();
             request.open('POST', 'php/register.php');
             request.onload = function () {
-                if (request.status === 200) 
-                {
+                if (request.status === 200) {
                     var respone = JSON.parse(request.responseText);
-                    if(respone.code == true)
-                    {
+                    if (respone.code == true) {
                         alert('注册成功');
                     }
-                    else{
+                    else {
                         alert('注册失败');
                     }
                 } else {
@@ -101,4 +93,5 @@
         }
     </script>
 </body>
+
 </html>
