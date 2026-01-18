@@ -6,6 +6,6 @@ if(ENV=="local")
 }
 else if(ENV == "remote")
 {
-    $pdo = new PDO("mysql:host=192.168.127.12;dbname=mryj", "root", "");
+    $pdo = new PDO("mysql:host=sql313.infinityfree.com;dbname=if0_38041735_", "if0_38041735_mryj", "zLyW2sLuCxL");
 }
 ?>
