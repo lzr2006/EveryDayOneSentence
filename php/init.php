@@ -1,4 +1,5 @@
 <?
+header("Content-Type:application/json;charset=utf-8");
 include("config.php");
 $table_user = "CREATE TABLE IF NOT EXISTS user (
     id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
