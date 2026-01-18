@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>每日一句-Login</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="css/login2.css">
+    <script src="js/thirdparty/localforage.min.js"></script>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="header">Login to <span>每日一句/小沙盒</span></div>
+        <div class="content">
+            <ul>
+                <li>
+                    <div class="text">
+                        <span class="yonghu">用户</span><input type="text" placeholder="请输入邮箱" id="email">
+                    </div>
+                </li>
+                <li>
+                    <div class="password">
+                        <span class="mima">密码</span><input type="password" placeholder="请输入密码" id="password" />
+                    </div>
+                </li>
+                <li class="remember">
+                    <input type="checkbox">记住我
+                </li>
+
+                <li>
+                    <input type="button" value="登陆" id="Mylogin" onclick="login()">
+                </li>
+                <li>
+                    <input type="button" value="注册" id="register" onclick="register()">
+                </li>
+            </ul>
+
+            <div class="footer">
+                <p>小沙盒工作室 <a href="https://lzr2006.github.io/wkgd/" target="_blank">Copyright 2018-2020 ToysWorld</a>
+                </p>
+            </div>
+        </div>
+    </div>
+    <script>
+        const email = document.getElementById('email');
+        const password = document.getElementById('password');
+
+        function login() {
+            const request = new XMLHttpRequest();
+            request.open('GET', "php/login.php?email=" + document.getElementById('email').value + "&password=" + document.getElementById('password').value)
+            request.onload = function () {
+                if (request.status === 200) {
+                    //console.log(request.responseText);
+                    var respone = JSON.parse(request.responseText);
+                    if (respone.status == true) {
+                        if (respone.status == true) {
+                            alert('登录成功');
+                            localforage.setItem('user', {
+                                email: email.value,
+                                password: password.value
+                            })
+                            window.location.href = 'index.html';
+                        }
+                    }
+                    else {
+                        alert(respone.message);
+                    }
+                } else {
+                    alert('请求失败');
+                }
+            }
+            request.send();
+
+        }
+        function register() {
+            const request = new XMLHttpRequest();
+            request.open('POST', 'php/register.php');
+            request.onload = function () {
+                if (request.status === 200) {
+                    var respone = JSON.parse(request.responseText);
+                    if (respone.code == true) {
+                        alert('注册成功');
+                    }
+                    else {
+                        alert('注册失败');
+                    }
+                } else {
+                    alert('请求失败');
+                }
+            }
+            var formData = new FormData();
+            formData.append('email', document.getElementById('email').value);
+            formData.append('password', document.getElementById('password').value);
+            request.send(formData);
+        }
+    </script>
+</body>
+
+</html>

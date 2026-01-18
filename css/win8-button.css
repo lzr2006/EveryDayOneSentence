@@ -1,0 +1,25 @@
+.win8-button {
+    background-color: #0078D7;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 0;
+    /* Win8风格直角 */
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.win8-button:hover {
+    background-color: #106EBE;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.win8-button:active {
+    transform: translateY(0);
+    background-color: #005A9E;
+}

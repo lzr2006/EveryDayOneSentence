@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>每日一句投稿页面</title>
+  <script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+  <script src="https://cdn.staticfile.org/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+  <link rel="stylesheet" href="css/win8-button.css">
+  <link rel="stylesheet" href="css/nice-nav-link.css">
+  <style>
+    h1 {
+      text-align: center;
+      background: orange;
+    }
+
+    #in {
+      width: 1000px;
+      height: 160px;
+    }
+
+    #sidebar {
+      display: inline-block;
+      width: 250px;
+      min-height: 400px;
+      background-color: #1d1d1d;
+      color: white;
+      border: none;
+      border-radius: 0;
+      vertical-align: top;
+      margin-right: 20px;
+    }
+
+    .sidebar-header {
+      background-color: #005A9E;
+      padding: 15px;
+      font-size: 18px;
+      font-weight: bold;
+      border-bottom: 1px solid #333;
+    }
+
+    .sidebar-header span {
+      color: white;
+    }
+
+    #sidebar ol {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    #sidebar ol li {
+      margin: 0;
+      padding: 0;
+    }
+
+    .sidebar-item {
+      display: block;
+      padding: 15px 20px;
+      background-color: #333333;
+      color: white;
+      text-decoration: none;
+      font-size: 16px;
+      border-bottom: 1px solid #444;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-radius: 0;
+      /* Win8风格直角 */
+    }
+
+    .sidebar-item:hover {
+      background-color: #444444;
+      padding-left: 25px;
+    }
+    .sidebar-item > li:hover
+    {
+      background-color: #0078D7;
+    }
+
+    .sidebar-item.active {
+      background-color: #0078D7;
+      border-left: 4px solid #ffffff;
+    }
+
+    .sidebar-item:first-child {
+      border-top: 1px solid #444;
+    }
+
+    .sidebar-item i {
+      margin-right: 10px;
+      width: 20px;
+      text-align: center;
+    }
+
+    #edit {
+      display: inline-flex;
+      flex-direction: column;
+    }
+    #edit > #buttons
+    {
+      display: flex;
+      flex-direction: row;
+    }
+  </style>
+  <script src="js/thirdparty/localforage.min.js"></script>
+</head>
+
+<body>
+  <nav>
+    <span>每日一句</span>
+    <a href="index.html">返回主站</a>
+    <a href="">稿件管理</a>
+    <a href="">合集管理</a>
+  </nav>
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <span>稿件管理</span>
+    </div>
+    <ol class="sidebar-list">
+      <li class="sidebar-item">待审核稿件</li>
+      <li class="sidebar-item">已发布稿件</li>
+      <li class="sidebar-item">草稿箱</li>
+    </ol>
+  </div>
+  <div id="edit">
+    <textarea id="in" type="text" name="sentence" value=""></textarea><br />
+    <p id="left">还能再输入100字</p>
+    <div id="buttons">
+      <button id="upload" class="win8-button">投稿</button> &nbsp;
+      <button id="update" class="win8-button">更新投稿</button>
+    </div>
+  </div>
+
+  <script>
+    const editor = document.getElementById('in');
+    var currentSentenceId = -1;
+    function copyToEditor()
+    {
+      editor.value = this.innerHTML;
+      currentSentenceId = this.dataset.id
+    }
+    // const sidebar = document.getElementById('sidebar');
+    const sidebarList = document.getElementsByClassName('sidebar-list')[0]
+    // console.log(sidebarList)
+    // 正确的异步处理方式
+    localforage.getItem('user').then(function (user) {
+      if (user == null) {
+        alert('请先登录');
+        window.location.href = 'login2.html';
+      } else {
+        // 用户已登录，继续执行其他逻辑
+        const request = new XMLHttpRequest();
+        request.open('GET', 'php/get_gaojian.php?email=' + user.email);
+        request.onload = function () {
+          if (request.status === 200) 
+          {
+            var json = JSON.parse(request.responseText);
+            console.log(json);
+            if (json.status == true) 
+            {
+              console.log('获取稿件成功');
+              for (var i = 0; i < json.data.length; i++) {
+                var item = json.data[i];
+                // 添加到审核通过列表
+                if(item.is_passed_shenhe == 1)
+                {
+                  var li = document.createElement('li');
+                  li.innerHTML = item.sentence;
+                  sidebarList.children.item(1).appendChild(li)
+                  for(var j=0; j< sidebarList.children.item(1).children.length; j++)
+                  {
+                    var li = sidebarList.children.item(1).children.item(j);
+                    li.dataset.id = item.id
+                    li.addEventListener('click',copyToEditor)
+                  }
+                }
+                // 添加到待审核列表
+                else if(item.is_passed_shenhe == 0)
+                {
+                  var li = document.createElement('li');
+                  li.innerHTML = item.sentence;
+                  sidebarList.children.item(0).appendChild(li)
+                  for(var j=0; j< sidebarList.children.item(0).children.length; j++)
+                  {
+                    var li = sidebarList.children.item(0).children.item(j);
+                    li.dataset.id = item.id
+                    li.addEventListener('click',copyToEditor)
+                  }
+                }
+              }
+            } else {
+              alert('获取稿件失败' + json.error);
+              console.warn(json);
+            }
+          } 
+        }
+        request.send()
+      }
+    }).catch(function (err) {
+      console.error('获取用户数据失败:', err);
+      alert('请先登录');
+      // window.location.href = 'login2.html';
+    });
+    var left = 100;
+    const textarea = document.getElementById('in');
+    const uploadButton = document.getElementById('upload');
+    const updateButton = document.getElementById('update');
+    textarea.addEventListener('input', function () {
+      left = 100 - textarea.value.length;
+      document.getElementById('left').innerHTML = '还能再输入' + left + '字';
+      if (left <= 0) {
+        textarea.value = textarea.value.substring(0, 100);
+        document.getElementById('left').innerHTML = '还能再输入0字';
+      }
+    });
+    uploadButton.addEventListener('click', function () {
+      localforage.getItem('user').then(function (user) {
+        if (user == null) {
+          alert('请先登录');
+          window.location.href = 'login2.html';
+          return;
+        }
+        const request = new XMLHttpRequest();
+        request.open('POST', 'php/upload.php');
+        var formData = new FormData();
+        formData.append('email', user.email);  // 将用户邮箱传递给后端
+        if(textarea.value && textarea.value.trim())
+        {
+          formData.append('sentence', document.getElementById('in').value)
+          formData.append('action', "upload")
+        }
+        else
+        {
+          alert('请输入内容');
+          return;
+        }
+        request.onload = function () {
+          if (request.status === 200) 
+          {
+            var json = JSON.parse(request.responseText);
+            console.log(json);
+            if (json.status == true) 
+            {
+              alert('投稿成功');
+            } else {
+              alert('投稿失败' + json.error);
+              console.warn(json);
+            }
+          } 
+          else {
+            alert('投稿失败');
+          }
+        };
+        request.send(formData);
+      }).catch(function (err) {
+        console.error('获取用户数据失败:', err);
+        alert('请先登录');
+        window.location.href = 'login2.html';
+      });
+    });
+    updateButton.addEventListener('click', function () {
+      localforage.getItem('user').then(function (user) {
+        if (user == null) {
+          alert('请先登录');
+          window.location.href = 'login2.html';
+          return;
+        }
+        const request = new XMLHttpRequest();
+        request.open('POST', 'php/upload.php');
+        var formData = new FormData();
+        formData.append('email', user.email);  // 将用户邮箱传递给后端
+        if(textarea.value && textarea.value.trim())
+        {
+          formData.append('sentence', document.getElementById('in').value);
+          formData.append('action', "update");
+          formData.append('sentence_id', currentSentenceId);
+        }
+        else
+        {
+          alert('请输入内容');
+          return;
+        }
+        request.onload = function () {
+          if (request.status === 200) 
+          {
+            console.log()
+            console.log(request.responseText)
+            var json = JSON.parse(request.responseText);
+            console.log(json);
+            if (json.status == true) 
+            {
+              alert('投稿成功');
+            } else {
+              alert('投稿失败' + json.error);
+              console.warn(json);
+            }
+          } 
+          else {
+            alert('投稿失败');
+          }
+        };
+        request.send(formData);
+      }).catch(function (err) {
+        console.error('获取用户数据失败:', err);
+        alert('请先登录');
+        window.location.href = 'login2.html';
+      });
+    });
+  </script>
+</body>
+
+</html>

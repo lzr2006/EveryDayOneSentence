@@ -1,27 +1,82 @@
 <?php
-#header("Content-Type:text/plain;charset=utf-8");
-include("auto_login_db.php");
-#远程
-if($_POST['db_remote'])
-{
-  $tmp_db_connect=auto_login_db("mryj");
-  upload($tmp_db_connect);
+header("Content-Type: application/json; charset=utf-8");
+include("config.php");
+
+if($_SERVER['REQUEST_METHOD'] == 'POST') {
+    try {
+        $email = $_POST["email"];
+        $sentence = $_POST["sentence"];
+        $action = $_POST["action"];
+        
+        // 首先检查用户是否存在
+        $stmt = $pdo->prepare("SELECT id FROM user WHERE email = :email");
+        $stmt->execute([":email" => $email]);
+        $result_uid = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$result_uid) {
+            echo json_encode([
+                "status" => false,
+                "message" => "用户不存在: " . $email
+            ]);
+            exit;
+        }
+        
+        $uid = $result_uid["id"];
+        
+        // 修复：不要包含 id 字段，让其自动递增；不要设置时间字段为 NULL
+        if($action == "upload")
+        {
+            $sql = "INSERT INTO sentence (user_id, sentence, is_passed_shenhe) VALUES (:user_id, :sentence, :is_passed_shenhe)";
+            $stmt = $pdo->prepare($sql);
+            $is_exe_ok = $stmt->execute([
+                ":user_id" => $uid,
+                ":sentence" => $sentence,
+                ":is_passed_shenhe" => 0
+            ]);
+            
+            if($is_exe_ok) {
+                echo json_encode([
+                    "status" => true,
+                    "message" => "投稿成功"
+                ]);
+            } else {
+                $error_info = $stmt->errorInfo();
+                echo json_encode([
+                    "status" => false,
+                    "message" => "投稿失败",
+                    "error" => $error_info
+                ]);
+            }
+        }
+        else if($action == "update")
+        {
+            $sql = "UPDATE sentence SET sentence = :sentence, is_passed_shenhe = 0 WHERE id = :sentence_id";
+            $stmt = $pdo->prepare($sql);
+            $is_exe_ok = $stmt->execute([
+                ":sentence" => $sentence,
+                ":sentence_id"=> $_POST["sentence_id"]
+            ]);
+            
+            if($is_exe_ok) {
+                echo json_encode([
+                    "status" => true,
+                    "message" => "更新成功"
+                ]);
+            } else {
+                $error_info = $stmt->errorInfo();
+                echo json_encode([
+                    "status" => false,
+                    "message" => "更新失败",
+                    "error" => $error_info
+                ]);
+            }
+        }
+        
+    } catch (Exception $e) {
+        echo json_encode([
+            "status" => false,
+            "message" => "数据库错误: " . $e->getMessage()
+        ]);
+    }
 }
-else
-{
-  $tmp_db_connect=auto_login_db("local");
-  upload($tmp_db_connect);
-}
-//投稿功能，默认投稿至审核数据表，审核通过之后，复制数据到句子总表
-function upload($conn)
-{
-  $today=date("Y/m/d");
-  $juzi=$_POST['text'];
-  $user=$_POST['user'];
-  // TODO: 新的审核的投稿方式 // NOTE: 首先插入到临时审核表
-  $sql="INSERT INTO checkjuzi VALUES('$juzi','$today','$user',-1)";
-  mysqli_query($conn,"SET NAMES utf8");
-  $result=mysqli_query($conn,$sql);
-  echo $result;
-}
- ?>
+?>
